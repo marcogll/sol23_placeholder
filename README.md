@@ -16,14 +16,14 @@ El servidor Express sirve todos los assets desde la raíz y expone `/healthcheck
 ## Deploy con Coolify / Traefik
 
 1. Importa el repositorio como app Docker en Coolify.
-2. Elige el `Dockerfile` del proyecto, expone el puerto `3000` (ya definido en el contenedor).
+2. Elige el `Dockerfile` del proyecto, expone el puerto `3001` (ya definido en el contenedor).
 3. Coolify/Traefik se encargan del TLS; usa el dominio que asignas en la app.
 4. Si necesitas alertas, define la variable de entorno `WEBHOOK_URLS` antes de levantar la app.
 
 Una vez desplegado podrás invocar el verificador con:
 
 ```bash
-curl https://tudominio.cloud/healthchecker
+curl https://soul23.cloud/healthchecker
 ```
 
 ## Contador y formulario
