@@ -10,6 +10,6 @@ RUN npm install --omit=dev
 # Copy the rest of the repository
 COPY . .
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["npm", "start"]

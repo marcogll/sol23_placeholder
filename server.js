@@ -4,7 +4,7 @@ const path = require("path");
 const { exec } = require("child_process");
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 const rootDir = path.join(__dirname);
 
 // Serve static assets from the project root
