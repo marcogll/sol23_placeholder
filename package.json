@@ -1,0 +1,14 @@
+{
+  "name": "soul23-coming-soon",
+  "version": "1.0.0",
+  "description": "Landing page for Soul:23 with a health checker endpoint for the ops team.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
