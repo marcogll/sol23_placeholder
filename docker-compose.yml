@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  soul23_cloud_site:
+    image: marcogll/soul23_cloud_site:latest
+    restart: unless-stopped
+    ports:
+      # Cambia el puerto de la izquierda si quieres exponerlo en otro puerto externo (por ej. "80:3001")
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    # Si en el futuro necesitas variables como API keys, añádelas aquí:
+    # - API_KEY=xxxx
+
+

@@ -18,14 +18,27 @@ app.get("/healthchecker", (req, res) => {
 
 // Magic link para redirigir a la app de Telegram según plataforma
 app.get("/telegram", (req, res) => {
-  const ua = (req.headers["user-agent"] || "").toLowerCase();
+  const uaRaw = req.headers["user-agent"] || "";
+  const ua = uaRaw.toLowerCase();
 
-  const isIOS =
+  // Log para debug
+  console.log("[/telegram] User-Agent:", uaRaw);
+
+  // Permitir forzar plataforma por query param: ?platform=ios|android
+  const platform = (req.query.platform || "").toString().toLowerCase();
+
+  const isIOSQuery = platform === "ios";
+  const isAndroidQuery = platform === "android";
+
+  const isIOSUA =
     ua.includes("iphone") ||
     ua.includes("ipad") ||
     ua.includes("ipod") ||
     ua.includes("ios");
-  const isAndroid = ua.includes("android");
+  const isAndroidUA = ua.includes("android");
+
+  const isIOS = isIOSQuery || isIOSUA;
+  const isAndroid = isAndroidQuery || isAndroidUA;
 
   if (isIOS) {
     // iOS -> App Store
