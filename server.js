@@ -43,11 +43,8 @@ app.get("/telegram", (req, res) => {
     );
   }
 
-  // Fallback: por ejemplo, dirigir al App Store
-  return res.redirect(
-    302,
-    "https://apps.apple.com/es/app/telegram-messenger/id686449807"
-  );
+  // Fallback: página oficial de descargas de Telegram
+  return res.redirect(302, "https://telegram.org/apps");
 });
 
 // Standard health check endpoint for monitoring with VPS ping
