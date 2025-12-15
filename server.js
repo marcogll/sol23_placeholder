@@ -16,6 +16,40 @@ app.get("/healthchecker", (req, res) => {
   res.sendFile(path.join(rootDir, "scripts", "health_checker"));
 });
 
+// Magic link para redirigir a la app de Telegram según plataforma
+app.get("/telegram", (req, res) => {
+  const ua = (req.headers["user-agent"] || "").toLowerCase();
+
+  const isIOS =
+    ua.includes("iphone") ||
+    ua.includes("ipad") ||
+    ua.includes("ipod") ||
+    ua.includes("ios");
+  const isAndroid = ua.includes("android");
+
+  if (isIOS) {
+    // iOS -> App Store
+    return res.redirect(
+      302,
+      "https://apps.apple.com/es/app/telegram-messenger/id686449807"
+    );
+  }
+
+  if (isAndroid) {
+    // Android -> Google Play
+    return res.redirect(
+      302,
+      "https://play.google.com/store/apps/details?id=org.telegram.messenger&pcampaignid=web_share"
+    );
+  }
+
+  // Fallback: por ejemplo, dirigir al App Store
+  return res.redirect(
+    302,
+    "https://apps.apple.com/es/app/telegram-messenger/id686449807"
+  );
+});
+
 // Standard health check endpoint for monitoring with VPS ping
 app.get("/health", (req, res) => {
   const vpsIp = "31.97.41.188";
