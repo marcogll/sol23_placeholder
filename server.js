@@ -18,46 +18,7 @@ app.get("/healthchecker", (req, res) => {
 
 // Magic link para redirigir a la app de Telegram según plataforma
 app.get("/telegram", (req, res) => {
-  const uaRaw = req.headers["user-agent"] || "";
-  const ua = uaRaw.toLowerCase();
-
-  // Log para debug
-  console.log("[/telegram] User-Agent:", uaRaw);
-
-  // Permitir forzar plataforma por query param: ?platform=ios|android
-  const platform = (req.query.platform || "").toString().toLowerCase();
-
-  const isIOSQuery = platform === "ios";
-  const isAndroidQuery = platform === "android";
-
-  const isIOSUA =
-    ua.includes("iphone") ||
-    ua.includes("ipad") ||
-    ua.includes("ipod") ||
-    ua.includes("ios");
-  const isAndroidUA = ua.includes("android");
-
-  const isIOS = isIOSQuery || isIOSUA;
-  const isAndroid = isAndroidQuery || isAndroidUA;
-
-  if (isIOS) {
-    // iOS -> App Store
-    return res.redirect(
-      302,
-      "https://apps.apple.com/es/app/telegram-messenger/id686449807"
-    );
-  }
-
-  if (isAndroid) {
-    // Android -> Google Play
-    return res.redirect(
-      302,
-      "https://play.google.com/store/apps/details?id=org.telegram.messenger&pcampaignid=web_share"
-    );
-  }
-
-  // Fallback: página oficial de descargas de Telegram
-  return res.redirect(302, "https://telegram.org/apps");
+  res.sendFile(path.join(rootDir, "telegram.html"));
 });
 
 // Standard health check endpoint for monitoring with VPS ping

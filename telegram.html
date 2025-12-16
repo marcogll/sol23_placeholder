@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Redirecting to Telegram...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <p>If you are not redirected automatically, <a href="https://telegram.org/apps">click here</a>.</p>
+  <script>
+    (function() {
+      var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+      var telegramUrl = "tg://";
+      var iosAppStoreUrl = "https://apps.apple.com/es/app/telegram-messenger/id686449807";
+      var androidPlayStoreUrl = "https://play.google.com/store/apps/details?id=org.telegram.messenger&pcampaignid=web_share";
+      var fallbackUrl = "https://telegram.org/apps";
+
+      var isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+      var isAndroid = /android/i.test(userAgent);
+
+      window.location.replace(telegramUrl);
+
+      var timeout;
+
+      if (isIOS) {
+        timeout = setTimeout(function() {
+          window.location.replace(iosAppStoreUrl);
+        }, 2000);
+      } else if (isAndroid) {
+        timeout = setTimeout(function() {
+          window.location.replace(androidPlayStoreUrl);
+        }, 2000);
+      } else {
+        timeout = setTimeout(function() {
+          window.location.replace(fallbackUrl);
+        }, 2000);
+      }
+
+      // Clear the timeout if the app opens successfully
+      function clearFallbackTimeout() {
+        clearTimeout(timeout);
+      }
+      window.addEventListener("pagehide", clearFallbackTimeout);
+      window.addEventListener("blur", clearFallbackTimeout);
+      document.addEventListener("visibilitychange", function() {
+        if (document.hidden) {
+          clearFallbackTimeout();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
