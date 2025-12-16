@@ -41,6 +41,23 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Endpoint to get the current time in multiple formats
+app.get("/time-server", (req, res) => {
+  const now = new Date();
+  const timezone = "America/Monterrey";
+
+  res.status(200).json({
+    // Full UTC ISO 8601 string for machines
+    utc_iso: now.toISOString(),
+    // Unix timestamp in seconds for machines
+    unixtime: Math.floor(now.getTime() / 1000),
+    // Human-readable local time for debugging
+    datetime_human: now.toLocaleString("en-US", { timeZone: timezone }),
+    // Timezone identifier
+    timezone: timezone,
+  });
+});
+
 // Fallback to index.html for other routes (optional)
 app.get("*", (req, res) => {
   res.sendFile(path.join(rootDir, "index.html"));
