@@ -2,6 +2,7 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const { exec } = require("child_process");
+const { runHealthChecker } = require("./scripts/health_checker");
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -17,28 +18,19 @@ app.use(express.static(rootDir, { index: "index.html" }));
 
 /**
  * @route GET /healthchecker
- * @description Ejecuta un script de Python para un chequeo de salud avanzado.
- * Invoca el script `scripts/health_checker.py`, que monitorea múltiples servicios
- * y devuelve un reporte detallado en formato JSON.
+ * @description Ejecuta un chequeo de salud avanzado implementado en Node.js.
+ * Lee `data/sites.json`, consulta los servicios definidos y devuelve un reporte JSON.
  * @returns {object} Un objeto JSON con el estado de los servicios monitoreados.
- * @throws 500 - Si el script de Python falla o su salida no es un JSON válido.
+ * @throws 500 - Si ocurre algún error durante la ejecución del chequeo.
  */
-app.get("/healthchecker", (req, res) => {
-  const pythonScriptPath = path.join(rootDir, "scripts", "health_checker.py");
-  
-  exec(`python3 ${pythonScriptPath}`, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error al ejecutar health_checker.py: ${stderr}`);
-      return res.status(500).json({ error: "No se pudo ejecutar el chequeo de salud" });
-    }
-    try {
-      const healthData = JSON.parse(stdout);
-      res.status(200).json(healthData);
-    } catch (parseErr) {
-      console.error(`Error al parsear la salida del chequeo de salud: ${parseErr}`);
-      res.status(500).json({ error: "La respuesta del chequeo de salud no es un JSON válido" });
-    }
-  });
+app.get("/healthchecker", async (req, res) => {
+  try {
+    const healthData = await runHealthChecker();
+    res.status(200).json(healthData);
+  } catch (error) {
+    console.error("Error al ejecutar el health checker:", error);
+    res.status(500).json({ error: "No se pudo ejecutar el chequeo de salud" });
+  }
 });
 
 /**

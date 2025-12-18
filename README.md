@@ -74,8 +74,8 @@ Es el núcleo de la aplicación. Configura un servidor Express que gestiona toda
         ```
 
 *   **`GET /healthchecker`**
-    *   **Descripción**: Ejecuta un script de monitoreo en Python (`scripts/health_checker.py`) y devuelve un reporte detallado del estado de los servicios definidos en `data/sites.json`.
-    *   **Lógica**: Utiliza `child_process.exec` de Node.js para invocar el script de Python. Captura la salida JSON del script y la sirve como respuesta. Es ideal para tableros de monitoreo o webhooks.
+    *   **Descripción**: Ejecuta un monitor de salud escrito en Node.js (`scripts/health_checker.js`) y devuelve un reporte detallado del estado de los servicios definidos en `data/sites.json`.
+    *   **Lógica**: Importa el módulo de chequeo desde `server.js`, corre todas las verificaciones (HTTP simples, endpoints dedicados y statuspage.io) y retorna el JSON resultante, ideal para tableros o webhooks.
     *   **Respuesta de Ejemplo (truncada)**:
         ```json
         {
@@ -114,9 +114,9 @@ Este directorio centraliza todos los datos que la aplicación necesita para func
 
 Contiene la lógica de negocio más compleja en forma de scripts.
 
-*   **`health_checker.py`**:
-    *   **Lenguaje**: Python 3.
-    *   **Dependencias**: `requests`.
+*   **`health_checker.js`**:
+    *   **Lenguaje**: Node.js (requiere Node 18+ con `fetch` nativo).
+    *   **Dependencias**: ninguna adicional (usa APIs nativas).
     *   **Lógica**:
         1.  Carga la lista de sitios desde `../data/sites.json`.
         2.  Itera sobre cada servicio y realiza diferentes tipos de verificaciones:
