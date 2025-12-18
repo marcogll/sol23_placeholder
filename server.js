@@ -2,7 +2,7 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const { exec } = require("child_process");
-const { runHealthChecker } = require("./scripts/health_checker");
+const { runHealthChecker } = require("./scripts/health_checker.js");
 
 const app = express();
 const port = process.env.PORT || 3001;
