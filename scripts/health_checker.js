@@ -4,6 +4,7 @@ const path = require("path");
 const STATUSPAGE_SERVICES = new Set(["openai", "canva", "cloudflare"]);
 const DEFAULT_TIMEOUT_MS = 10_000;
 const META_STATUS_ENDPOINTS = [
+  "https://metastatus.com/api/v1/status",
   "https://metastatus.com/api/status",
   "https://metastatus.com/api/statuses",
 ];
@@ -16,6 +17,30 @@ const META_APPS = new Map([
 const META_STATUS_CACHE_TTL_MS = 60_000;
 const META_SLUGS = [...new Set(META_APPS.values())];
 
+// User-Agents realistas para Meta services
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+];
+
+// Endpoints confiables para Meta services
+const META_RELIABLE_ENDPOINTS = {
+  facebook: [
+    'https://graph.facebook.com/v19.0/',
+    'https://m.facebook.com/',
+    'https://www.facebook.com/'
+  ],
+  instagram: [
+    'https://www.instagram.com/instagram/',
+    'https://www.instagram.com/'
+  ],
+  whatsapp: [
+    'https://web.whatsapp.com/',
+    'https://www.whatsapp.com/'
+  ]
+};
+
 let metaStatusCache = { expiresAt: 0, map: null };
 
 const getWebhookUrls = () => {
@@ -24,6 +49,10 @@ const getWebhookUrls = () => {
     .split(",")
     .map((url) => url.trim())
     .filter(Boolean);
+};
+
+const getRandomUserAgent = () => {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 };
 
 const fetchWithTimeout = async (url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) => {
@@ -44,6 +73,31 @@ const checkUrl = async (url) => {
     });
     return response.status;
   } catch {
+    return 0;
+  }
+};
+
+// Nueva función para Meta services con mejores headers
+const checkUrlWithBetterHeaders = async (url) => {
+  try {
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        'User-Agent': getRandomUserAgent(),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9,es;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Cache-Control': 'max-age=0'
+      },
+      redirect: 'follow'
+    }, 8_000);
+    return response.status;
+  } catch (error) {
     return 0;
   }
 };
@@ -350,6 +404,53 @@ const getMetaStatusForApp = async (appKey) => {
   }
 };
 
+// Nueva función especializada para verificar servicios de Meta
+const checkMetaService = async (appKey, fallbackUrl) => {
+  // Primero intentar MetaStatus oficial
+  const metaStatus = await getMetaStatusForApp(appKey);
+  if (metaStatus) {
+    console.log(`✓ ${appKey}: MetaStatus funcionó`);
+    return metaStatus;
+  }
+
+  console.log(`⚠ ${appKey}: MetaStatus no disponible, probando endpoints alternativos...`);
+
+  // Intentar con endpoints confiables
+  const endpoints = META_RELIABLE_ENDPOINTS[appKey] || [fallbackUrl];
+  
+  for (const url of endpoints) {
+    const statusCode = await checkUrlWithBetterHeaders(url);
+    
+    // 200 = OK
+    if (statusCode === 200) {
+      return `🟢 OK (${statusCode} - ${new URL(url).hostname})`;
+    }
+    
+    // 301/302/307/308 = Redirecciones (también OK)
+    if ([301, 302, 307, 308].includes(statusCode)) {
+      return `🟢 OK (Redirect ${statusCode} - ${new URL(url).hostname})`;
+    }
+    
+    // 400/401/403 con mejores headers = servicio funcional pero protegido
+    if ([400, 401, 403].includes(statusCode)) {
+      // Si es Graph API y da 400, significa que está funcionando
+      if (url.includes('graph.facebook.com')) {
+        return `🟢 OK (API responde ${statusCode} - requiere auth)`;
+      }
+      // Para otros casos, es advertencia pero probablemente funcional
+      return `🟡 Probablemente OK (${statusCode} - protección anti-bot activa)`;
+    }
+
+    // 404 = URL incorrecta pero servidor responde
+    if (statusCode === 404) {
+      return `🟡 Servidor responde (${statusCode})`;
+    }
+  }
+
+  // Si todos los endpoints fallaron completamente
+  return `🔴 Sin respuesta de ningún endpoint`;
+};
+
 const getStatusPageStatus = async (baseUrl) => {
   const url = `${baseUrl.replace(/\/$/, "")}/api/v2/summary.json`;
   try {
@@ -426,15 +527,10 @@ const buildSection = async (dictionary) => {
       output[`${name}_status`] = statusMessage;
       output[`${name}_state`] = statusMessage;
     } else if (META_APPS.has(name)) {
-      statusMessage = await getMetaStatusForApp(name);
-      if (statusMessage) {
-        output[`${name}_status`] = statusMessage;
-        output[`${name}_state`] = statusMessage;
-      } else {
-        const fallbackStatus = await checkUrl(urlOrIp);
-        output[`${name}_status`] = fallbackStatus;
-        output[`${name}_state`] = humanState(fallbackStatus);
-      }
+      // ⭐ AQUÍ ESTÁ EL CAMBIO PRINCIPAL
+      statusMessage = await checkMetaService(name, urlOrIp);
+      output[`${name}_status`] = statusMessage;
+      output[`${name}_state`] = statusMessage;
     } else {
       const statusCode = await checkUrl(urlOrIp);
       output[`${name}_status`] = statusCode;
